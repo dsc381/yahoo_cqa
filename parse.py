@@ -23,7 +23,7 @@ def process_element(elem1,elem2,model):
     answer = answer.replace('<br />','')
     question = answer.replace('<br />','')
     answer = re.sub('. *\n','. ',answer)
-    if(len(model.tokenize(answer.strip())) < 5 and 5==5):
+    if(len(model.tokenize(answer.strip())) < 5 and len(model.tokenize(answer.strip())) >= 1 and len(model.tokenize(question.strip())) < 2):
         print "hi"
     
     print '\n'
