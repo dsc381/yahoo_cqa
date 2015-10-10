@@ -46,13 +46,6 @@ def extract(f):
     X = vectorizer.fit_transform(corpus)
     return X,labels
 
-f = codecs.open(os.path.expanduser("~/Data/cqa/uiuc/train_5500.utf8.txt"),encoding='utf-8',errors='ignore')
-X,Y = extract(f)
-f.close()
-pct_train = .8
-num_train = int(X.shape[0]*pct_train)
-train_set,test_set = X[:num_train], X[num_train:]
-train_l, test_l = Y[:num_train], Y[num_train:]
 
 
 # vectorizer = CountVectorizer(min_df=1)
@@ -64,15 +57,43 @@ train_l, test_l = Y[:num_train], Y[num_train:]
 # X = vectorizer.fit_transform(corpus)
 # X_2 = bi_vectorizer.fit_transform(corpus)
 
+def yahoo_cq():
+    corp = []
+    q = open("q_id.txt","r")
+    i = 0
+    for l in q:
+        if i%2 == 0:
+            corp.append(l)
+    q.close()
+    return corp
 
-clf = svm.SVC()
-clf.fit(train_set,train_l)
-results =  clf.predict(test_set)
-print accuracy_score(results,test_l)
-print precision_score(results,test_l)
-print len(results)
-clz = svm.SVC(C=1)
-clz.fit(X,Y)
-results =  clz.predict(X)
-print precision_score(results,Y)
+
+
+
+if __name__ == '__main__':
+    f = codecs.open(os.path.expanduser("~/Data/cqa/uiuc/train_5500.utf8.txt"),encoding='utf-8',errors='ignore')
+    X,Y = extract(f)
+    f.close()
+    # pct_train = .8
+    # num_train = int(X.shape[0]*pct_train)
+    # train_set,test_set = X[:num_train], X[num_train:]
+    # train_l, test_l = Y[:num_train], Y[num_train:]
+    clf = svm.SVC()
+    clf.fit(X,Y)
+    results =  clf.predict(yahoo_cq())
+    desc_q = []
+    i = 0
+    for i in results:
+        if i == 1:
+            desc_q.append(i)
+        i += 1
+    dec_uid = open('desc_uid',"w")
+    print >> desc_uid, desc_q
+    # print accuracy_score(results,test_l)
+    # print precision_score(results,test_l)
+    # print list(results).count(1)
+    # clz = svm.SVC(C=1)
+    # results =  clz.predict(X)
+    # print precision_score(results,Y)
+
 
