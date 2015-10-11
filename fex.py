@@ -42,8 +42,16 @@ def extract(f):
             labels.append(1)
         else:
             labels.append(0)
+    #yahoo data addition
+    corp = []
+    q = open("q_id.txt","r")
+    i = 0
+    for l in q:
+        if i%2 == 0:
+            corp.append(l)
+    q.close()
     vectorizer = CountVectorizer(min_df=1,binary=True,stop_words=None)
-    X = vectorizer.fit_transform(corpus)
+    X = vectorizer.fit_transform(corpus + corp)
     return X,labels
 
 
@@ -57,15 +65,6 @@ def extract(f):
 # X = vectorizer.fit_transform(corpus)
 # X_2 = bi_vectorizer.fit_transform(corpus)
 
-def yahoo_cq():
-    corp = []
-    q = open("q_id.txt","r")
-    i = 0
-    for l in q:
-        if i%2 == 0:
-            corp.append(l)
-    q.close()
-    return corp
 
 
 
@@ -76,11 +75,11 @@ if __name__ == '__main__':
     f.close()
     # pct_train = .8
     # num_train = int(X.shape[0]*pct_train)
-    # train_set,test_set = X[:num_train], X[num_train:]
+    train_set,test_set = X[:len(labels)], X[len(label):]
     # train_l, test_l = Y[:num_train], Y[num_train:]
     clf = svm.SVC()
-    clf.fit(X,Y)
-    results =  clf.predict(yahoo_cq())
+    clf.fit(train_set,Y)
+    results =  clf.predict(test_set)
     desc_q = []
     i = 0
     for i in results:
