@@ -31,6 +31,7 @@ def extract(f):
         return fi
 
     def get_labels(f):
+        '''assumes file is LABEL: text'''
         labels = [[] for i in xrange(5)]
         category = []
         corpus = []
@@ -93,8 +94,8 @@ def extract(f):
             corp.append(l)
     q.close()
     vectorizer = CountVectorizer(min_df=1,stop_words=None)
-    X = vectorizer.fit_transform(corpus)
-    miniX = vectorizer.fit_transform(d_corpus)
+    X = vectorizer.fit_transform(corpus+corp)
+    miniX = vectorizer.fit_transform(d_corpus+corp)
     return X,miniX,Y
 
 
@@ -130,10 +131,8 @@ if __name__ == '__main__':
     f = codecs.open(os.path.expanduser("~/Data/cqa/uiuc/train_5500.utf8.txt"),encoding='utf-8',errors='ignore')
     X,miniX,Y = extract(f)
     f.close()
-    for i in Y:
-        print i[-10:]
-    # train_set,d_train_set = X[:len(Y[0])], miniX[:len(Y[5])]
-    # test_set,d_test_set = X[len(Y[0]):len(Y[0])+500], miniX[len(Y[5]):len(Y[5])+500]
+    train_set,d_train_set = X[:len(Y[0])], miniX[:len(Y[5])]
+    test_set,d_test_set = X[len(Y[0]):len(Y[0])+500], miniX[len(Y[5]):len(Y[5])+500]
     svms = []
     for i in xrange(6):
         svms.append(svm.LinearSVC())
@@ -141,9 +140,9 @@ if __name__ == '__main__':
     for sv,i in zip(svms,xrange(6)):
         print str(i)+" /5"
         if i == 5:
-            sv.fit(miniX,Y[i])
+            sv.fit(d_train_set,Y[i])
         else:
-            sv.fit(X,Y[i])
+            sv.fit(train_set,Y[i])
         #     sv.fit(d_train_set,Y[i])
         # else:
         #     sv.fit(train_set,Y[i])
@@ -153,19 +152,13 @@ if __name__ == '__main__':
         print str(i)+" /5"
         if i ==5:
             #change back from dtrain and train
-            results.append(sv.predict(miniX))
+            results.append(sv.predict(d_test_set))
         else:
-            results.append(sv.predict(X))
+            results.append(sv.predict(test_set))
     current = numpy.zeros(len(results[1]))
-    for res in results[:-1]:
-        print list(res).count(1)
-        print list(res).count(0)
+    for res in zip(results[:-1]):
         current = numpy.logical_or(res,current)
-        print "-----"
     current = numpy.logical_or(results[5].resize(len(current)),numpy.invert(current))
-    test = numpy.invert(current)
-    print list(test).count(1)
-    print list(test).count(0)
 
     # desc_q = []
     # i = 0
@@ -174,10 +167,7 @@ if __name__ == '__main__':
     #         desc_q.append(i)
     #     i += 1
     numpy.savetxt("desc_uid",current, fmt= "%d")
-    numpy.savetxt("desc_without_d",test, fmt= "%d")
     numpy.savetxt("desc_d",results[5], fmt= "%d")
-    # print accuracy_score(results,test_l)
-    # print precision_score(results,test_l)
     # print list(results).count(1)
     # clz = svm.SVC(C=1)
     # results =  clz.predict(X)
