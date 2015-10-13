@@ -132,7 +132,7 @@ if __name__ == '__main__':
     X,miniX,Y = extract(f)
     f.close()
     train_set,d_train_set = X[:len(Y[0])], miniX[:len(Y[5])]
-    test_set,d_test_set = X[len(Y[0]):len(Y[0])+500], miniX[len(Y[5]):len(Y[5])+500]
+    test_set,d_test_set = X[len(Y[0]):], miniX[len(Y[5]):]
     svms = []
     for i in xrange(6):
         svms.append(svm.LinearSVC())
@@ -151,11 +151,13 @@ if __name__ == '__main__':
     for sv,i in zip(svms,xrange(6)):
         print str(i)+" /5"
         if i ==5:
-            #change back from dtrain and train
             results.append(sv.predict(d_test_set))
+            print d_test_set.shape[0]
+            print results[5].shape
         else:
             results.append(sv.predict(test_set))
     current = numpy.zeros(len(results[1]))
+    numpy.savetxt("desc_d",results[5].T, fmt= "%d")
     for res in zip(results[:-1]):
         current = numpy.logical_or(res,current)
     current = numpy.logical_or(results[5].resize(len(current)),numpy.invert(current))
@@ -166,8 +168,7 @@ if __name__ == '__main__':
     #     if i == 1:
     #         desc_q.append(i)
     #     i += 1
-    numpy.savetxt("desc_uid",current, fmt= "%d")
-    numpy.savetxt("desc_d",results[5], fmt= "%d")
+    numpy.savetxt("desc_uid",current.T, fmt= "%d")
     # print list(results).count(1)
     # clz = svm.SVC(C=1)
     # results =  clz.predict(X)
