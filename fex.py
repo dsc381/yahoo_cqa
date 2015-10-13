@@ -1,11 +1,11 @@
 import os
+import numpy
 import codecs
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn import svm
 from sklearn.metrics import accuracy_score, precision_score
 
-labels = []
 
 def s_extract(f):
     dict = {}
@@ -20,22 +20,27 @@ def extract(f):
                 hits.append(l)
             else:
                 misses.append(l)
-        f = []
+        fi = []
         i = 0
         for ex in hits:
-            f.append(ex)
-            f.append(misses[i])
+            fi.append(ex)
+            fi.append(misses[i])
+            i+=1
+            fi.append(misses[i])
             i += 1
-        return f
+        return fi
 
-    def get_labels(name,f):
-        labels[[],[],[],[],[]]
+    def get_labels(f):
+        labels = [[] for i in xrange(5)]
+        category = []
+        corpus = []
         for l in f:
             temp = l.split(' ',1)
             corpus.append(temp[1:][0])
             category.append(temp[0])
+        i = 0
         for line in category:
-            if "HUM:" in line:
+            if "HUM" in line:
                 labels[0].append(1)
             else:
                 labels[0].append(0)
@@ -57,8 +62,12 @@ def extract(f):
                 labels[4].append(0)
         return corpus,labels
 
-    def desc_lables(f):
-        for l in f:
+    def desc_lables(fi):
+        '''As DESC is so low in represented, we use random sampling to build SVM'''
+        corpus = []
+        category = []
+        labels =[]
+        for l in fi:
             temp = l.split(' ',1)
             corpus.append(temp[1:][0])
             category.append(temp[0])
@@ -70,9 +79,9 @@ def extract(f):
         return corpus,labels
 
     corpus = []
-    Y = []
+    corpus,Y = get_labels(f)
+    f.seek(0)
     fi = sample(f)
-    corpus,Y = get_labels(name,f)
     d_corpus,d_labels = desc_lables(fi)
     Y.append(d_labels)
     #yahoo data addition
@@ -83,49 +92,80 @@ def extract(f):
         if i%2 == 0:
             corp.append(l)
     q.close()
-    vectorizer = CountVectorizer(min_df=1,binary=True,stop_words=None)
-    X = vectorizer.fit_transform(corpus + corp)
-    miniX = vectorizer.fit_transform(d_corpus+corp)
+    vectorizer = CountVectorizer(min_df=1,stop_words=None)
+    X = vectorizer.fit_transform(corpus)
+    miniX = vectorizer.fit_transform(d_corpus)
     return X,miniX,Y
-
-
-
-# vectorizer = CountVectorizer(min_df=1)
-# Y = vectorizer.fit_transform(labels)
-# bi_vectorizer = CountVectorizer(ngram_range=(1,2),
-#                                 token_pattern=r'\b\w+\b', min_df=1)
-
-
-# X = vectorizer.fit_transform(corpus)
-# X_2 = bi_vectorizer.fit_transform(corpus)
-
 
 
 
 
 if __name__ == '__main__':
+    stop_w = ['a',
+    'about','above','after','again','against',
+    'all','am','an','and','any','are','aren\'t',
+    'as','at','be','because','been','before','being',
+    'below','between','both','but','by','can\'t','cannot',
+    'could','couldn\'t','did','didn\'t','do','does','doesn\'t',
+    'doing','don\'t','down','during','each','few','for',
+    'from','further','had','hadn\'t','has','hasn\'t','have',
+    'haven\'t','having','he','he\'d','he\'ll','he\'s','her',
+    'here','here\'s','hers','herself','him','himself','his',
+    'i','i\'d','i\'ll','i\'m','i\'ve','if','in',
+    'into','is','isn\'t','it','it\'s','its','itself',
+    'let\'s','me','more','most','mustn\'t','my','myself',
+    'no','nor','not','of','off','on','once',
+    'only','or','other','ought','our','ours','ourselves',
+    'out','over','own','same','shan\'t','she','she\'d',
+    'she\'ll','she\'s','should','shouldn\'t','so','some','such',
+    'than','that','that\'s','the','their','theirs','them',
+    'themselves','then','there','there\'s','these','they','they\'d',
+    'they\'ll','they\'re','they\'ve','this','those','through','to',
+    'too','under','until','up','very','was','wasn\'t',
+    'we','we\'d','we\'ll','we\'re','we\'ve','were','weren\'t',
+    'while','with','won\'t','would','wouldn\'t','you','you\'d',
+    'you\'ll','you\'re','you\'ve','your','yours','yourself','yourselves']
+
+
     f = codecs.open(os.path.expanduser("~/Data/cqa/uiuc/train_5500.utf8.txt"),encoding='utf-8',errors='ignore')
     X,miniX,Y = extract(f)
     f.close()
-    train_set,d_train_set = X[:len(labels[0])], miniX[:len(labels[-1])]
-    test_set,d_test_set = X[len(labels[0]):], miniX[len(labels[-1]):]
-    # train_l, test_l = Y[:num_train], Y[num_train:]
+    for i in Y:
+        print i[-10:]
+    # train_set,d_train_set = X[:len(Y[0])], miniX[:len(Y[5])]
+    # test_set,d_test_set = X[len(Y[0]):len(Y[0])+500], miniX[len(Y[5]):len(Y[5])+500]
     svms = []
     for i in xrange(6):
-        svms.append(svm.SVC())
+        svms.append(svm.LinearSVC())
+    print "training"
     for sv,i in zip(svms,xrange(6)):
+        print str(i)+" /5"
         if i == 5:
-            sv.fit(d_train_set,Y[i])
-        sv.fit(train_set,Y[i])
+            sv.fit(miniX,Y[i])
+        else:
+            sv.fit(X,Y[i])
+        #     sv.fit(d_train_set,Y[i])
+        # else:
+        #     sv.fit(train_set,Y[i])
     results = []
-    for sv in svms:
+    print "evaulating"
+    for sv,i in zip(svms,xrange(6)):
+        print str(i)+" /5"
         if i ==5:
-            results.append(sv.predict(d_test_set))
-        results.append(sv.predict(test_set))
-    current = np.ones(len(results[1]))
+            #change back from dtrain and train
+            results.append(sv.predict(miniX))
+        else:
+            results.append(sv.predict(X))
+    current = numpy.zeros(len(results[1]))
     for res in results[:-1]:
-        current = np.logical_and(res)
-    current = np.logical_or(results[-1].resize(len(current)),np.invert(current))
+        print list(res).count(1)
+        print list(res).count(0)
+        current = numpy.logical_or(res,current)
+        print "-----"
+    current = numpy.logical_or(results[5].resize(len(current)),numpy.invert(current))
+    test = numpy.invert(current)
+    print list(test).count(1)
+    print list(test).count(0)
 
     # desc_q = []
     # i = 0
@@ -134,6 +174,8 @@ if __name__ == '__main__':
     #         desc_q.append(i)
     #     i += 1
     numpy.savetxt("desc_uid",current, fmt= "%d")
+    numpy.savetxt("desc_without_d",test, fmt= "%d")
+    numpy.savetxt("desc_d",results[5], fmt= "%d")
     # print accuracy_score(results,test_l)
     # print precision_score(results,test_l)
     # print list(results).count(1)
