@@ -1,21 +1,43 @@
 import ast
+import json
+import langid
 
+def eval_language(l):
+    if type(l) is list:
+        temp =  map(langid.classify,l)
+        return [t[0] for t in temp]
+    else:
+        return langid.classify(l)[0]
 def convert(s):
     output = []
     for l in s:
         output.append(l.rstrip('\n'))
     return output
-q = open("desc_d","r")
-f = open("q_id.txt")
-q_ids = convert(f)
-f.close()
-labels = convert(q)
+svm = open("desc_d","r")
+q = open("q-a_pair.json","r")
+
+questions = json.load(q)
+labels = convert(svm)
+svm.close()
 q.close()
-correct = []
-for l,d in zip( labels,xrange(0,len(labels)-1)):
-    if l == "1":
-        correct.append(q_ids[d])
-        correct.append(q_ids[d+1])
-outfile = open("correct_uid.txt","w")
-print >>  outfile, '\n'.join(correct)
+web = ['http','.com','.edu','org','www.']
+
+output = []
+i = 0
+for label,entry in zip( labels,questions):
+    if i%100000 == 0:
+        print i
+    i += 1
+    if label == "1":
+        answer = entry['answer']
+        nanswers = entry['nbestanswers']
+        question = entry['question']
+        nanswers = [n for n in nanswers if n not in web]
+        nanswers = [n for n,lang in zip(nanswers,eval_language(nanswers)) if lang == 'en']
+        if eval_language(question) == 'en' and eval_language(answer) == 'en' and (not any([w in question for w in web]) and not any([w in answer for w in web])) and entry['main_cat'] != 'Family':
+            entry['nbestanswers'] = nanswers
+            output.append(entry)
+
+with open("desc_full.json", 'w') as f:
+  json.dump(output,f)
 

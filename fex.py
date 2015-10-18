@@ -1,4 +1,5 @@
 import os
+import json
 import numpy
 import codecs
 from sklearn.feature_extraction.text import CountVectorizer
@@ -7,9 +8,6 @@ from sklearn import svm
 from sklearn.metrics import accuracy_score, precision_score
 
 
-def s_extract(f):
-    dict = {}
-    corpus = []
 
 def extract(f):
     def sample(f):
@@ -85,13 +83,13 @@ def extract(f):
     fi = sample(f)
     d_corpus,d_labels = desc_lables(fi)
     Y.append(d_labels)
+
     #yahoo data addition
     corp = []
-    q = open("q_id.txt","r")
-    i = 0
-    for l in q:
-        if i%2 == 0:
-            corp.append(l)
+    q = open("q-a_pair.json","r")
+    json_q = json.load(q)
+    for l in json_q:
+        corp.append(l["question"])
     q.close()
     vectorizer = CountVectorizer(min_df=1,stop_words=None)
     X = vectorizer.fit_transform(corpus+corp)
