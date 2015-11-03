@@ -1,4 +1,6 @@
-json_object = json.load("q-a_pair.json")
+import json
+f = open("desc_full.json","r")
+json_object = json.load(f)
 q = open("yqa.queries","w")
 a = open("answers.dat","w")
 q_true = open("yqa.judge","w")
