@@ -24,22 +24,16 @@ for i in json_object:
     a.write(i["answer"]+"\n")
     a.write("</TEXT>\n")
     a.write("</DOC>\n")
-    if k == 188838:
-        print i['answer']
-    k += 1
     repeat = 0
     for ans in i['nbestanswers']:
         #TODO fix bug and then remove thise
         if repeat == 0:
-            repeat += 1
+            repeat = 1
             continue
         if len([t  for t in ans.translate(remove_punctuation_map).split(' ') if t.lower() not in stop_list]) < 11:
             continue
-        if k == 188838:
-            print ans
         a.write("<DOC>\n")
         a.write("<DOCNO> "+str(k)+" </DOCNO>\n")
-        k += 1
         a.write("<TEXT>\n")
         a.write(ans+"\n")
         a.write("</TEXT>\n")
